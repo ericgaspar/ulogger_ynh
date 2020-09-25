@@ -6,9 +6,9 @@
 ;; Test complet
 	; Manifest
 		domain="domain.tld"	(DOMAIN)
-		path="/path"	(PATH)
+		path="/path"	    (PATH)
 		admin="john"	
-		is_public=1	(PUBLIC|public=1|private=0)
+		is_public=1	        (PUBLIC|public=1|private=0)
 		language="fr"
 	; Checks
 		pkg_linter=1

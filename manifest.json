@@ -3,10 +3,10 @@
     "id": "ulogger",
     "packaging_format": 1,
     "description": {
-        "en": "A real-time collection of geolocation data, tracks viewing and management.",
+        "en": "Real-time collection of geolocation data, tracks viewing and management.",
         "fr": "Géolocalisation en temps réel, gestion et affichage de traces."
     },
-    "version": "0.5~ynh1",
+    "version": "1.0~ynh1",
     "url": "https://github.com/bfabiszewski/ulogger-server",
     "license": "GPL",
     "maintainer": {
@@ -14,7 +14,7 @@
         "email": "anmol@datamol.org"
     },
     "requirements": {
-        "yunohost": ">= 3.0.0"
+        "yunohost": ">= 3.8.1"
     },
     "multi_instance": true,
     "services": [
@@ -62,7 +62,7 @@
                 "ask": {
                     "en": "Choose the application language"
                 },
-                "choices": ["fr", "en", "pl", "de", "hu", "it" ],
+                "choices": ["fr", "en", "pl", "de", "hu", "it"],
                 "default": "en"
             }
         ]
