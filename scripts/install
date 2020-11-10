@@ -58,11 +58,6 @@ ynh_app_setting_set $app is_public $is_public
 ynh_app_setting_set $app language $language
 
 #=================================================
-# STANDARD MODIFICATIONS
-#=================================================
-
-
-#=================================================
 # CREATE A MYSQL DATABASE
 #=================================================
 ynh_print_info "Creating a MySQL database..."
@@ -79,9 +74,9 @@ ynh_print_info "Setting up source files..."
 ynh_app_setting_set $app final_path $final_path
 # Download, check integrity, uncompress and patch the source from app.src
 ynh_setup_source "$final_path"
-#Copy config.php to the final path
-sudo cp -r ../conf/config.php $final_path
 
+#Copy config.php to the final path
+cp -r ../conf/config.php $final_path
 
 #=================================================
 # NGINX CONFIGURATION
@@ -118,14 +113,14 @@ chown -R $app: $final_path
 # MODIFY A CONFIG FILE
 #=================================================
 
-ynh_replace_string "__dbuser__" "$db_name" "$final_path/config.php"
-ynh_replace_string "__dbpass__" "$db_pwd" "$final_path/config.php"
-ynh_replace_string "__admin__" "$admin" "$final_path/config.php"
-ynh_replace_string "__lang__" "$language" "$final_path/config.php"
-ynh_replace_string "^\$enabled = false;" "\$enabled = true;" "$final_path/scripts/setup.php"
+ynh_replace_string --match_string="__dbuser__" --replace_string="$db_name" --target_file="$final_path/config.php"
+ynh_replace_string --match_string="__dbpass__" --replace_string="$db_pwd" --target_file="$final_path/config.php"
+ynh_replace_string --match_string="__admin__" --replace_string="$admin" --target_file="$final_path/config.php"
+ynh_replace_string --match_string="__lang__" --replace_string="$language" --target_file="$final_path/config.php"
+ynh_replace_string --match_string="^\$enabled = false;" --replace_string="\$enabled = true;" --target_file="$final_path/scripts/setup.php"
 # Replace variables in sql scripts
-ynh_replace_string "__admin__" "$admin" ../conf/admin.sql
-ynh_replace_string "__admin_pwd__" "$admin_password" ../conf/admin.sql
+ynh_replace_string --match_string="__admin__" --replace_string="$admin" --target_file="../conf/admin.sql"
+ynh_replace_string --match_string="__admin_pwd__" --replace_string="$admin_password" --target_file="../conf/admin.sql"
 
 # Set the app as temporarily public for curl call
 ynh_print_info "Configuring SSOwat..."
@@ -148,7 +143,7 @@ then
 	ynh_app_setting_delete $app skipped_uris
 fi
 
-#Add the admin account to the database
+# Add the admin account to the database
 ynh_mysql_connect_as "$db_name" "$db_pwd" "$db_name" < "../conf/admin.sql"
 #Disable setup for security
 ynh_replace_string "^\$enabled = true;" "\$enabled = false;" "$final_path/scripts/setup.php"
@@ -157,12 +152,8 @@ ynh_replace_string "^\$enabled = true;" "\$enabled = false;" "$final_path/script
 # STORE THE CONFIG FILE CHECKSUM
 #=================================================
 
-### `ynh_store_file_checksum` is used to store the checksum of a file.
-### That way, during the upgrade script, by using `ynh_backup_if_checksum_is_different`,
-### you can make a backup of this file before modifying it again if the admin had modified it.
-
 # Calculate and store the config file checksum into the app settings
-ynh_store_file_checksum "$final_path/config.php"
+ynh_store_file_checksum "$final_path/scripts/setup.php"
 
 #=================================================
 # GENERIC FINALIZATION
@@ -176,21 +167,13 @@ chown -R $app: $final_path
 #=================================================
 # SETUP SSOWAT
 #=================================================
-ynh_print_info "Configuring SSOwat..."
+ynh_script_progression --message="Configuring SSOwat..." --weight=1
 
-# Make app public if necessary
+# Make app public if necessary or protect it
 if [ $is_public -eq 1 ]
 then
-	# unprotected_uris allows SSO credentials to be passed anyway.
-	ynh_app_setting_set $app unprotected_uris "/"
+	ynh_permission_update --permission "main" --add "visitors"
 fi
-
-#=================================================
-# RELOAD NGINX
-#=================================================
-ynh_print_info "Reloading nginx web server..."
-
-ynh_systemd_action --service_name=nginx --action=reload
 
 #=================================================
 # SEND A README FOR THE ADMIN
@@ -208,7 +191,14 @@ If you are facing any problem or want to improve this app, please open a new iss
 ynh_send_readme_to_admin "$message"
 
 #=================================================
+# RELOAD NGINX
+#=================================================
+ynh_script_progression --message="Reloading NGINX web server..." --weight=2
+
+ynh_systemd_action --service_name=nginx --action=reload
+
+#=================================================
 # END OF SCRIPT
 #=================================================
 
-ynh_print_info "Installation of $app completed"
+ynh_script_progression --message="Installation of Invidious completed" --last
